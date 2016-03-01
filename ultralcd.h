@@ -5,6 +5,11 @@
 
 #ifdef ULTRA_LCD
 
+  #ifdef ENABLE_OLPLCD
+    #define SDCARDDETECT -1
+  #endif
+
+
   void lcd_update();
   void lcd_init();
   void lcd_setstatus(const char* message);

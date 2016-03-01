@@ -13,6 +13,88 @@
 #define E1_MS2_PIN -1
 #define DIGIPOTSS_PIN -1
 
+#if MOTHERBOARD == 720
+#define KNOWN_BOARD
+/*****************************************************************
+ * Ultimaker pin assignment
+ ******************************************************************/
+
+#ifndef __AVR_ATmega1280__
+#ifndef __AVR_ATmega2560__
+#error Oops!  Make sure you have 'Arduino Mega' selected from the 'Tools -> Boards' menu.
+#endif
+#endif
+
+#define LARGE_FLASH true
+
+#define X_STEP_PIN 25
+#define X_DIR_PIN 23
+#define X_MIN_PIN -1
+#define X_MAX_PIN 24
+#define X_ENABLE_PIN 27
+
+#define Y_STEP_PIN 31
+#define Y_DIR_PIN 33
+#define Y_MIN_PIN -1
+#define Y_MAX_PIN 28
+#define Y_ENABLE_PIN 29
+
+#define Z_STEP_PIN 37
+#define Z_DIR_PIN 39
+#define Z_MIN_PIN 46 // Z-Probe
+#define Z_MAX_PIN 32
+#define Z_ENABLE_PIN 35
+
+#define HEATER_BED_PIN 4
+#define TEMP_BED_PIN 10
+
+#define HEATER_0_PIN  2
+#define TEMP_0_PIN 8
+
+#define HEATER_1_PIN 3
+#define TEMP_1_PIN 9
+
+#define HEATER_2_PIN -1
+#define TEMP_2_PIN -1
+
+#define VotageDetectionPin 11
+#define PowerCheckPin 34
+ 
+#define E0_STEP_PIN         43
+#define E0_DIR_PIN          45
+#define E0_ENABLE_PIN       41
+
+#define E1_STEP_PIN         49
+#define E1_DIR_PIN          47
+#define E1_ENABLE_PIN       48
+
+#define SDPOWER            -1
+#define SDSS               53
+#define LED_PIN            13
+#define FAN_PIN            7
+
+#define KILL_PIN           -1
+#define SUICIDE_PIN        -1  //PIN that has to be turned on right after start, to keep power flowing.
+
+#define PS_ON_PIN 12
+
+
+//#ifdef FilamentDetection
+//#define FilamentDetectionPin 46
+//#endif
+
+#define BatteryPin 26
+
+#define SDCARDDETECT 38
+
+#define BEEPER -1
+
+#define APPROACH_PIN 11
+#define GATE_PIN 36
+
+#endif
+
+
 #if MOTHERBOARD == 99
 #define KNOWN_BOARD 1
 

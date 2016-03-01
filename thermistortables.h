@@ -564,6 +564,59 @@ const short temptable_10[][2] PROGMEM = {
 };
 #endif
 
+#if (THERMISTORHEATER_0 == 20) || (THERMISTORHEATER_1 == 20) || (THERMISTORHEATER_2 == 20) || (THERMISTORBED == 20) // PT100 with INA826 amp on Ultimaker v2.0 electronics
+/* The PT100 in the Ultimaker v2.0 electronics has a high sample value for a high temperature.
+This does not match the normal thermistor behaviour so we need to set the following defines */
+#if (THERMISTORHEATER_0 == 20)
+# define HEATER_0_RAW_HI_TEMP 16383
+# define HEATER_0_RAW_LO_TEMP 0
+#endif
+#if (THERMISTORHEATER_1 == 20)
+# define HEATER_1_RAW_HI_TEMP 16383
+# define HEATER_1_RAW_LO_TEMP 0
+#endif
+#if (THERMISTORHEATER_2 == 20)
+# define HEATER_2_RAW_HI_TEMP 16383
+# define HEATER_2_RAW_LO_TEMP 0
+#endif
+#if (THERMISTORBED == 20)
+# define HEATER_BED_RAW_HI_TEMP 16383
+# define HEATER_BED_RAW_LO_TEMP 0
+#endif
+
+
+const short temptable_20[][2] PROGMEM = {
+    {         0  ,       0       },
+    {       103  ,       1       },
+    {       340  ,       7       },
+    {       477  ,       15      },
+    {       660  ,       21      },
+    {       961  ,       28      },
+    {       1260 ,       36      },
+    {       2300 ,       62      },
+    {       4384 ,       110     },
+   {       4771 ,       120     },
+   {       5141 ,       130     },
+   {       5525 ,       140     },
+   {       5865 ,       150     },
+   {       6261 ,       160     },
+   {       6629 ,       170     },
+   {       7014 ,       180     },
+   {       7361 ,       190     },
+   {       7729 ,       200     },
+   {       8082 ,       210     },
+   {       8451 ,       220     },
+   {       8769 ,       230     },
+   {       9159 ,       240     },
+   {       18493,       500     },
+  
+  
+};
+
+
+//};
+#endif
+
 #if (THERMISTORHEATER_0 == 51) || (THERMISTORHEATER_1 == 51) || (THERMISTORHEATER_2 == 51) || (THERMISTORBED == 51)
 // 100k EPCOS (WITH 1kohm RESISTOR FOR PULLUP, R9 ON SANGUINOLOLU! NOT FOR 4.7kohm PULLUP! THIS IS NOT NORMAL!)
 // Verified by linagee.

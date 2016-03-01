@@ -891,7 +891,6 @@ static void menu_action_setting_edit_bool(const char* pstr, bool* ptr)
 void lcd_init()
 {
     lcd_implementation_init();
-
 #ifdef NEWPANEL
     pinMode(BTN_EN1,INPUT);
     pinMode(BTN_EN2,INPUT); 
@@ -909,6 +908,13 @@ void lcd_init()
     WRITE(SHIFT_OUT,HIGH);
     WRITE(SHIFT_LD,HIGH);
   #endif
+#elif defined(ENABLE_OLPLCD)
+    pinMode(PushButtonUp,INPUT);
+    pinMode(PushButtonDown,INPUT);
+    pinMode(PushButtonEnter,INPUT);
+    WRITE(PushButtonUp,HIGH);    
+    WRITE(PushButtonDown,HIGH);    
+    WRITE(PushButtonEnter,HIGH);    
 #else
     pinMode(SHIFT_CLK,OUTPUT);
     pinMode(SHIFT_LD,OUTPUT);
@@ -1066,6 +1072,7 @@ void lcd_setcontrast(uint8_t value)
 }
 #endif
 
+
 #ifdef ULTIPANEL
 /* Warning: This function is called from interrupt context */
 void lcd_buttons_update()
@@ -1093,22 +1100,94 @@ void lcd_buttons_update()
       }
       buttons_reprapworld_keypad=~newbutton_reprapworld_keypad; //invert it, because a pressed switch produces a logical 0
 	#endif
+#elif defined(ENABLE_OLPLCD)
+    uint8_t newbutton=0;
+    #if PushButtonEnter > 0
+        if((blocking_enc<millis()) && (READ(PushButtonEnter)==0))
+            newbutton |= EN_C;
+    #endif
+    buttons = newbutton;
+
 #else   //read it from the shift register
     uint8_t newbutton=0;
-    WRITE(SHIFT_LD,LOW);
-    WRITE(SHIFT_LD,HIGH);
+//    WRITE(SHIFT_LD,LOW);
+//    WRITE(SHIFT_LD,HIGH);
     unsigned char tmp_buttons=0;
     for(int8_t i=0;i<8;i++)
     { 
         newbutton = newbutton>>1;
-        if(READ(SHIFT_OUT))
-            newbutton|=(1<<7);
-        WRITE(SHIFT_CLK,HIGH);
-        WRITE(SHIFT_CLK,LOW);
+//        if(READ(SHIFT_OUT))
+//            newbutton|=(1<<7);
+//        WRITE(SHIFT_CLK,HIGH);
+//        WRITE(SHIFT_CLK,LOW);
     }
     buttons=~newbutton; //invert it, because a pressed switch produces a logical 0
 #endif//!NEWPANEL
 
+#if defined(ENABLE_OLPLCD)
+  static uint16_t pushButtonUpTimer=0;
+  static uint16_t pushButtonDownTimer=0;
+  
+  if (!READ(PushButtonUp)) {
+    pushButtonUpTimer++;
+    
+    if (pushButtonUpTimer == 2)
+        encoderDiff--;
+
+    if (pushButtonUpTimer >= 1000) {
+      encoderDiff--;
+      pushButtonUpTimer=0;
+    }
+    /*
+    if (pushButtonUpTimer >= 500>>5) {
+      if ((pushButtonUpTimer & (0x007f>>5))==0x0000) {
+        encoderDiff--;
+      }
+      if (pushButtonUpTimer >= 3000>>5) {
+        if ((pushButtonUpTimer & (0x003f>>5))==0x0000) {
+          encoderDiff--;
+        }
+        if (pushButtonUpTimer >= 6000>>5) {
+            encoderDiff--;
+        }
+      }
+    }*/
+  }
+  else{
+    pushButtonUpTimer=0;
+  }
+  
+  
+  if (!READ(PushButtonDown)) {
+    pushButtonDownTimer++;
+    
+    if (pushButtonDownTimer == 2)
+        encoderDiff++;
+
+    if (pushButtonDownTimer >= 1000) {
+      encoderDiff++;
+      pushButtonDownTimer=0;
+    }
+    /*
+    if (pushButtonDownTimer >= 500>>5) {
+      if ((pushButtonDownTimer & (0x007f>>5))==0x0000) {
+        encoderDiff++;
+      }
+      
+      if (pushButtonDownTimer >= 3000>>5) {
+        if ((pushButtonDownTimer & (0x003f>>5))==0x0000) {
+          encoderDiff++;
+        }
+        if (pushButtonDownTimer >= 6000>>5) {
+            encoderDiff++;
+        }
+      }
+    }*/
+  }
+  else{
+    pushButtonDownTimer=0;
+  }
+#else
     //manage encoder rotation
     uint8_t enc=0;
     if(buttons&EN_A)
@@ -1146,6 +1225,7 @@ void lcd_buttons_update()
         }
     }
     lastEncoderBits = enc;
+#endif//ENABLE_OLPLCD
 }
 
 void lcd_buzz(long duration, uint16_t freq)

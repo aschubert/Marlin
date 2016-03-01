@@ -239,4 +239,14 @@ extern unsigned long stoptime;
 // Handling multiple extruders pins
 extern uint8_t active_extruder;
 
+#if EXTRUDERS > 3
+  # error Unsupported number of extruders
+#elif EXTRUDERS > 2
+  # define ARRAY_BY_EXTRUDERS(v1, v2, v3) { v1, v2, v3 }
+#elif EXTRUDERS > 1
+  # define ARRAY_BY_EXTRUDERS(v1, v2, v3) { v1, v2 }
+#else
+  # define ARRAY_BY_EXTRUDERS(v1, v2, v3) { v1 }
+#endif
+
 #endif

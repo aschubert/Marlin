@@ -64,7 +64,7 @@
 // When first starting the main fan, run it at full speed for the
 // given number of milliseconds.  This gets the fan spinning reliably
 // before setting a PWM value. (Does not work with software PWM for fan on Sanguinololu)
-//#define FAN_KICKSTART_TIME 100
+#define FAN_KICKSTART_TIME 100
 
 // Extruder cooling fans
 // Configure fan pin outputs to automatically turn on/off when the associated
@@ -194,10 +194,10 @@
 #endif //DUAL_X_CARRIAGE
     
 //homing hits the endstop, then retracts by this distance, before it tries to slowly bump again:
-#define X_HOME_RETRACT_MM 5 
-#define Y_HOME_RETRACT_MM 5 
-#define Z_HOME_RETRACT_MM 5 
-//#define QUICK_HOME  //if this is defined, if both x and y are to be homed, a diagonal move will be performed initially.
+#define X_HOME_RETRACT_MM 7 
+#define Y_HOME_RETRACT_MM 7 
+#define Z_HOME_RETRACT_MM 7 
+#define QUICK_HOME  //if this is defined, if both x and y are to be homed, a diagonal move will be performed initially.
 
 #define AXIS_RELATIVE_MODES {false, false, false, false}
 
@@ -259,7 +259,7 @@
 #define SD_FINISHED_RELEASECOMMAND "M84 X Y Z E" // You might want to keep the z enabled so your bed stays in place.
 
 // The hardware watchdog should reset the Microcontroller disabling all outputs, in case the firmware gets stuck and doesn't do temperature regulation.
-//#define USE_WATCHDOG
+#define USE_WATCHDOG
 
 #ifdef USE_WATCHDOG
 // If you have a watchdog reboot in an ArduinoMega2560 then the device will hang forever, as a watchdog reset will leave the watchdog on.
@@ -300,11 +300,11 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 // You can get round this by connecting a push button or single throw switch to the pin defined as SDCARDCARDDETECT 
 // in the pins.h file.  When using a push button pulling the pin to ground this will need inverted.  This setting should
 // be commented out otherwise
-#define SDCARDDETECTINVERTED 
+//#define SDCARDDETECTINVERTED 
 
-#ifdef ULTIPANEL
- #undef SDCARDDETECTINVERTED
-#endif
+//#ifdef ULTIPANEL
+// #undef SDCARDDETECTINVERTED
+//#endif
 
 // Power Signal Control Definitions
 // By default use ATX definition

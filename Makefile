@@ -37,19 +37,19 @@
 # from the commandline with "make HARDWARE_MOTHERBOARD=71" for example
 
 # This defined the board you are compiling for (see Configuration.h for the options)
-HARDWARE_MOTHERBOARD ?= 11
+HARDWARE_MOTHERBOARD ?= 720
 
 # Arduino source install directory, and version number
-ARDUINO_INSTALL_DIR  ?= ../../arduino-0022
-ARDUINO_VERSION      ?= 22
+ARDUINO_INSTALL_DIR  ?= /Users/schubsi/Documents/OverLord/Firmware/src/Arduino-1.0.5.app/Contents/Resources/Java
+ARDUINO_VERSION      ?= 105
 
 # You can optionally set a path to the avr-gcc tools. Requires a trailing slash. (ex: /usr/local/avr-gcc/bin)
-AVR_TOOLS_PATH ?=
+AVR_TOOLS_PATH ?= /Users/schubsi/Documents/OverLord/Firmware/src/Arduino-1.0.5.app/Contents/Resources/Java/hardware/tools/avr/bin/
 
 #Programmer configuration
 UPLOAD_RATE        ?= 115200
-AVRDUDE_PROGRAMMER ?= arduino
-UPLOAD_PORT        ?= /dev/arduino
+AVRDUDE_PROGRAMMER ?= wiring
+UPLOAD_PORT        ?= /dev/tty.usbserial-AI02GDRH
 
 #Directory used to build files in, contains all the build files, from object files to the final hex file.
 BUILD_DIR          ?= applet
@@ -168,6 +168,10 @@ else ifeq  ($(HARDWARE_MOTHERBOARD),301)
 HARDWARE_VARIANT ?= arduino
 MCU              ?= atmega2560
 
+#Overlord
+else ifeq  ($(HARDWARE_MOTHERBOARD),720)
+HARDWARE_VARIANT ?= arduino
+MCU              ?= atmega2560
 endif
 
 # Be sure to regenerate speed_lookuptable.h with create_speed_lookuptable.py
@@ -238,6 +242,28 @@ else
 SRC += twi.c
 CXXSRC += Wire.cpp LiquidTWI2.cpp
 endif
+
+
+# U8glib Makefile support
+
+VPATH += $(ARDUINO_INSTALL_DIR)/libraries/U8glib
+VPATH += $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility
+CXXSRC += U8glib.cpp
+SRC += u8g_ll_api.c u8g_bitmap.c u8g_rect.c u8g_font.c u8g_font_data.c \
+	u8g_dev_ssd1306_128x64.c u8g_com_api.c u8g_pb.c u8g_pb8v1.c u8g_com_arduino_ssd_i2c.c \
+	u8g_state.c u8g_clip.c u8g_delay.c u8g_page.c u8g_com_i2c.c
+#SRC += $(shell ls $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility/u8g_*.c)
+
+#project_NAME := libU8glib.a
+#project_C_SRCS := $(shell ls $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility/*.c)
+#project_CXX_SRCS := $(ARDUINO_INSTALL_DIR)/libraries/U8glib/U8glib.cpp
+#project_C_OBJS := ${project_C_SRCS:.c=.o}
+#project_CXX_OBJS := ${project_CXX_SRCS:.cpp=.o}
+#project_OBJS := $(project_C_OBJS) $(project_CXX_OBJS)
+#project_OBJS := $(project_CXX_OBJS)
+#project_INCLUDE_DIRS := $(ARDUINO_INSTALL_DIR)/libraries/U8glib/ $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility/
+#CPPFLAGS += $(foreach includedir,$(project_INCLUDE_DIRS),-I$(includedir)) 
+
 
 #Check for Arduino 1.0.0 or higher and use the correct sourcefiles for that version
 ifeq ($(shell [ $(ARDUINO_VERSION) -ge 100 ] && echo true), true)
@@ -317,7 +343,7 @@ AVRDUDE_CONF = $(ARDUINO_INSTALL_DIR)/hardware/tools/avrdude.conf
 else
 AVRDUDE_CONF = $(ARDUINO_INSTALL_DIR)/hardware/tools/avr/etc/avrdude.conf
 endif
-AVRDUDE_FLAGS = -D -C $(AVRDUDE_CONF) \
+AVRDUDE_FLAGS = -D -V -C $(AVRDUDE_CONF) \
 	-p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) \
 	-b $(UPLOAD_RATE)
 
@@ -331,8 +357,8 @@ LST = $(ASRC:.S=.lst) $(CXXSRC:.cpp=.lst) $(SRC:.c=.lst)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CFLAGS = -mmcu=$(MCU) -I. $(CFLAGS)
-ALL_CXXFLAGS = -mmcu=$(MCU) $(CXXFLAGS)
+ALL_CFLAGS = -mmcu=$(MCU) -I. $(CFLAGS) -mrelax
+ALL_CXXFLAGS = -mmcu=$(MCU) $(CXXFLAGS) -mrelax
 ALL_ASFLAGS = -mmcu=$(MCU) -x assembler-with-cpp $(ASFLAGS)
 
 # set V=1 (eg, "make V=1") to print the full commands etc.
@@ -365,7 +391,7 @@ upload: $(BUILD_DIR)/$(TARGET).hex
 ifeq (${AVRDUDE_PROGRAMMER}, arduino)
 	stty hup < $(UPLOAD_PORT); true
 endif
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
+	$(AVR_TOOLS_PATH)/$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
 ifeq (${AVRDUDE_PROGRAMMER}, arduino)
 	stty -hup < $(UPLOAD_PORT); true
 endif
@@ -427,12 +453,11 @@ $(BUILD_DIR)/%.o: %.c Configuration.h Configuration_adv.h $(MAKEFILE)
 
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.cpp Configuration.h Configuration_adv.h $(MAKEFILE)
 	$(Pecho) "  CXX   $<"
-	$P $(CXX) -MMD -c $(ALL_CXXFLAGS) $< -o $@
+	$P $(CXX) -MMD -c $(ALL_CXXFLAGS)  $< -o $@
 
 $(BUILD_DIR)/%.o: %.cpp Configuration.h Configuration_adv.h $(MAKEFILE)
 	$(Pecho) "  CXX   $<"
 	$P $(CXX) -MMD -c $(ALL_CXXFLAGS) $< -o $@
-
 
 # Target: clean project.
 clean:
@@ -445,6 +470,10 @@ clean:
 
 
 .PHONY:	all build elf hex eep lss sym program coff extcoff clean depend sizebefore sizeafter
+
+
+hello:
+	@echo $(VPATH)
 
 # Automaticaly include the dependency files created by gcc
 -include ${wildcard $(BUILD_DIR)/*.d}

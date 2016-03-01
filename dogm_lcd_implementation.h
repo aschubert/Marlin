@@ -83,6 +83,8 @@ U8GLIB_ST7920_128X64_RRD u8g(0);
 #elif defined(MAKRPANEL)
 // The MaKrPanel display, ST7565 controller as well
 U8GLIB_NHD_C12864 u8g(DOGLCD_CS, DOGLCD_A0);
+#elif defined(ENABLE_OLPLCD)
+	U8GLIB_SH1106_128X64 u8g(U8G_I2C_OPT_DEV_0|U8G_I2C_OPT_FAST);
 #else
 // for regular DOGM128 display with HW-SPI
 U8GLIB_DOGM128 u8g(DOGLCD_CS, DOGLCD_A0);	// HW-SPI Com: CS, A0
@@ -90,6 +92,17 @@ U8GLIB_DOGM128 u8g(DOGLCD_CS, DOGLCD_A0);	// HW-SPI Com: CS, A0
 
 static void lcd_implementation_init()
 {
+#if defined(ENABLE_OLPLCD)
+  pinMode(OLP_RESET, 0x1);
+  pinMode(OLP_CS, 0x1);
+  digitalWrite(OLP_CS, 1);
+  // reset line 5
+  digitalWrite(OLP_RESET, 0);
+  delay(5);
+  digitalWrite(OLP_RESET, 1);
+  delay(5);
+  delayMicroseconds(200);
+#endif
 #ifdef LCD_PIN_BL
 	pinMode(LCD_PIN_BL, OUTPUT);	// Enable LCD backlight
 	digitalWrite(LCD_PIN_BL, HIGH);
