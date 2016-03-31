@@ -57,6 +57,24 @@
 #define SERIAL_PROTOCOLLN(x) (MYSERIAL.print(x),MYSERIAL.write('\n'))
 #define SERIAL_PROTOCOLLNPGM(x) (serialprintPGM(PSTR(x)),MYSERIAL.write('\n'))
 
+#ifdef _DEBUG
+
+#define SERIAL_DEBUG(x) SERIAL_PROTOCOL(x)
+#define SERIAL_DEBUGPGM(x) SERIAL_PROTOCOLPGM(x)
+#define SERIAL_DEBUGLN(x) SERIAL_PROTOCOLLN(x)
+#define SERIAL_DEBUGLNPGM(x) SERIAL_PROTOCOLLNPGM(x)
+#define SERIAL_DEBUGPGMPTR(x) serialprintPGM(x)
+
+#else
+
+#define SERIAL_DEBUG(x)
+#define SERIAL_DEBUGPGM(x)
+#define SERIAL_DEBUGLN(x)
+#define SERIAL_DEBUGLNPGM(x)
+#define SERIAL_DEBUGPGMPTR(x)
+
+#endif
+
 const char errormagic[] PROGMEM ="Error:";
 const char echomagic[] PROGMEM ="echo:";
 #define SERIAL_ERROR_START (serialprintPGM(errormagic))

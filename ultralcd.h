@@ -90,7 +90,7 @@
     #define LCD_CLICKED ((buttons&B_MI)||(buttons&B_ST))
   #endif//NEWPANEL
 
-#else //no lcd
+#elif !defined(ENABLE_ULTILCD2) //no lcd
   FORCE_INLINE void lcd_update() {}
   FORCE_INLINE void lcd_init() {}
   FORCE_INLINE void lcd_setstatus(const char* message) {}

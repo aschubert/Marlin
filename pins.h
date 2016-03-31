@@ -78,6 +78,15 @@
 
 #define PS_ON_PIN 12
 
+#ifdef PushButton
+#define PushButtonUp  17
+//#define PushButtonDown  42
+//#define PushButtonEnter 40
+
+#define PushButtonDown  19
+#define PushButtonEnter 16
+#endif
+
 
 //#ifdef FilamentDetection
 //#define FilamentDetectionPin 46

@@ -40,11 +40,11 @@
 HARDWARE_MOTHERBOARD ?= 720
 
 # Arduino source install directory, and version number
-ARDUINO_INSTALL_DIR  ?= /Users/schubsi/Documents/OverLord/Firmware/src/Arduino-1.0.5.app/Contents/Resources/Java
+ARDUINO_INSTALL_DIR  ?= /Applications/Arduino-1.0.5.app/Contents/Resources/Java
 ARDUINO_VERSION      ?= 105
 
 # You can optionally set a path to the avr-gcc tools. Requires a trailing slash. (ex: /usr/local/avr-gcc/bin)
-AVR_TOOLS_PATH ?= /Users/schubsi/Documents/OverLord/Firmware/src/Arduino-1.0.5.app/Contents/Resources/Java/hardware/tools/avr/bin/
+AVR_TOOLS_PATH ?= /Applications/Arduino-1.0.5.app/Contents/Resources/Java/hardware/tools/avr/bin/
 
 #Programmer configuration
 UPLOAD_RATE        ?= 115200
@@ -231,39 +231,17 @@ SRC = wiring.c \
 	wiring_analog.c wiring_digital.c \
 	wiring_pulse.c \
 	wiring_shift.c WInterrupts.c
-CXXSRC = WMath.cpp WString.cpp Print.cpp Marlin_main.cpp	\
-	MarlinSerial.cpp Sd2Card.cpp SdBaseFile.cpp SdFatUtil.cpp	\
-	SdFile.cpp SdVolume.cpp motion_control.cpp planner.cpp		\
-	stepper.cpp temperature.cpp cardreader.cpp ConfigurationStore.cpp \
-	watchdog.cpp SPI.cpp Servo.cpp Tone.cpp ultralcd.cpp
+CXXSRC = Marlin_main.cpp temperature.cpp planner.cpp stepper.cpp watchdog.cpp \
+	ConfigurationStore.cpp motion_control.cpp MarlinSerial.cpp new.cpp WMath.cpp \
+	Print.cpp UltiLCD2.cpp UltiLCD2_low_lib.cpp UltiLCD2_hi_lib.cpp UltiLCD2_gfx.cpp 
+
+
 ifeq ($(LIQUID_TWI2), 0)
 CXXSRC += LiquidCrystal.cpp
 else
 SRC += twi.c
 CXXSRC += Wire.cpp LiquidTWI2.cpp
 endif
-
-
-# U8glib Makefile support
-
-VPATH += $(ARDUINO_INSTALL_DIR)/libraries/U8glib
-VPATH += $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility
-CXXSRC += U8glib.cpp
-SRC += u8g_ll_api.c u8g_bitmap.c u8g_rect.c u8g_font.c u8g_font_data.c \
-	u8g_dev_ssd1306_128x64.c u8g_com_api.c u8g_pb.c u8g_pb8v1.c u8g_com_arduino_ssd_i2c.c \
-	u8g_state.c u8g_clip.c u8g_delay.c u8g_page.c u8g_com_i2c.c
-#SRC += $(shell ls $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility/u8g_*.c)
-
-#project_NAME := libU8glib.a
-#project_C_SRCS := $(shell ls $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility/*.c)
-#project_CXX_SRCS := $(ARDUINO_INSTALL_DIR)/libraries/U8glib/U8glib.cpp
-#project_C_OBJS := ${project_C_SRCS:.c=.o}
-#project_CXX_OBJS := ${project_CXX_SRCS:.cpp=.o}
-#project_OBJS := $(project_C_OBJS) $(project_CXX_OBJS)
-#project_OBJS := $(project_CXX_OBJS)
-#project_INCLUDE_DIRS := $(ARDUINO_INSTALL_DIR)/libraries/U8glib/ $(ARDUINO_INSTALL_DIR)/libraries/U8glib/utility/
-#CPPFLAGS += $(foreach includedir,$(project_INCLUDE_DIRS),-I$(includedir)) 
-
 
 #Check for Arduino 1.0.0 or higher and use the correct sourcefiles for that version
 ifeq ($(shell [ $(ARDUINO_VERSION) -ge 100 ] && echo true), true)

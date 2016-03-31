@@ -34,7 +34,7 @@ static void lcd_menu_special_startup();
 void lcd_init()
 {
     lcd_lib_init();
-    /* SCHUBSI if (!lcd_material_verify_material_settings())
+    /* ASCHUBERT if (!lcd_material_verify_material_settings())
     {
         lcd_material_reset_defaults();
         for(uint8_t e=0; e<EXTRUDERS; e++)
@@ -50,7 +50,7 @@ void lcd_update()
 {
     if (!lcd_lib_update_ready()) return;
     lcd_lib_buttons_update();
-    // SCHUBSI card.updateSDInserted();
+    // ASCHUBERT card.updateSDInserted();
     
     if (led_glow_dir)
     {
@@ -65,7 +65,7 @@ void lcd_update()
     {
         lcd_lib_clear();
         lcd_lib_draw_stringP(15, 10, PSTR("ERROR - STOPPED"));
-        /* SCHUBSI switch(StoppedReason())
+        /* ASCHUBERT switch(StoppedReason())
         {
         case STOP_REASON_MAXTEMP:
         case STOP_REASON_MINTEMP:
@@ -109,7 +109,7 @@ void lcd_update()
             lcd_lib_draw_string_centerP(0, PSTR("Printing with USB..."));
           
           char buffer[32];
-          // SCHUBSI sprintf_P(buffer,PSTR("isBLEUpdate:%i"), int(isBLEUpdate));
+          // ASCHUBERT sprintf_P(buffer,PSTR("isBLEUpdate:%i"), int(isBLEUpdate));
           lcd_lib_draw_string_center(10, buffer);
 
 //          lcd_lib_draw_string_center(20, cmdbuffer[0]);
@@ -119,7 +119,7 @@ void lcd_update()
 
             serialScreenShown = true;
         }
-        /* SCHUBSI if (printing_state == PRINT_STATE_HEATING || printing_state == PRINT_STATE_HEATING_BED || printing_state == PRINT_STATE_HOMING)
+        /* ASCHUBERT if (printing_state == PRINT_STATE_HEATING || printing_state == PRINT_STATE_HEATING_BED || printing_state == PRINT_STATE_HOMING)
             lastSerialCommandTime = millis();*/
         lcd_lib_update_screen();
     }else{
@@ -170,7 +170,7 @@ void lcd_menu_startup()
                 LED_NORMAL();
                 lcd_lib_beep();
                 
-                /* SCHUBSIif (!IS_FIRST_RUN_DONE())
+                /* ASCHUBERTif (!IS_FIRST_RUN_DONE())
                   {
                     currentMenu = lcd_menu_first_run_init;
                   }else{
@@ -214,7 +214,7 @@ void lcd_menu_startup()
 #ifdef SPECIAL_STARTUP
         currentMenu = lcd_menu_special_startup;
 #else
-        /* SCHUBSI if (!IS_FIRST_RUN_DONE()){
+        /* ASCHUBERT if (!IS_FIRST_RUN_DONE()){
             currentMenu = lcd_menu_first_run_init;
         }
         else{
@@ -253,12 +253,12 @@ void doCooldown()
     for(uint8_t n=0; n<EXTRUDERS; n++)
         setTargetHotend(0, n);
     setTargetBed(0);
-    // SCHUBSI fanSpeed = lround(255 * int(fanSpeedPercent) / 100.0) ;
+    // ASCHUBERT fanSpeed = lround(255 * int(fanSpeedPercent) / 100.0) ;
 }
 
 static char* lcd_menu_main_item(uint8_t nr)
 {
-    /* SCHUBSI if (nr == 0)
+    /* ASCHUBERT if (nr == 0)
         strcpy_P(card.longFilename, PSTR("\x83""Print"));
     else
         strcpy_P(card.longFilename, PSTR("???"));
@@ -283,14 +283,14 @@ void lcd_menu_main()
     
     if (IS_SELECTED_SCROLL(1))
     {
-        // SCHUBSI lcd_change_to_menu(lcd_menu_maintenance, SCROLL_MENU_ITEM_POS(0), MenuDown);
+        // ASCHUBERT lcd_change_to_menu(lcd_menu_maintenance, SCROLL_MENU_ITEM_POS(0), MenuDown);
     }
     
     if (lcd_lib_button_pressed)
     {
         if (IS_SELECTED_SCROLL(0))
         {
-            /* SCHUBSI if (SDUPSIsWorking()) {
+            /* ASCHUBERT if (SDUPSIsWorking()) {
                 lcd_change_to_menu(lcd_menu_print_resume_option,SCROLL_MENU_ITEM_POS(0), MenuForward);
             }
             else{

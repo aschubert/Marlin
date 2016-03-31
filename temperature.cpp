@@ -31,6 +31,7 @@
 
 #include "Marlin.h"
 #include "ultralcd.h"
+#include "UltiLCD2.h"
 #include "temperature.h"
 #include "watchdog.h"
 

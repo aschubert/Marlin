@@ -70,7 +70,10 @@
 
 #define POWER_SUPPLY 2
 
+//ASCHUBERT #define OverLord
+//ASCHUBERT #define OVERLORD_PRO
 #define VotageDetection
+#define PushButton
 
 //===========================================================================
 //============================== Delta Settings =============================
@@ -110,7 +113,7 @@
 // Z-Probe variables
 // Start and end location values are used to deploy/retract the probe (will move from start to end and back again)
 #define PROBING_FEEDRATE 100/10*60
-#define Z_PROBE_OFFSET {0, 0, -22.5, 0}  // X, Y, Z, E distance between hotend nozzle and deployed bed leveling probe.
+#define Z_PROBE_OFFSET {0, 0, -19.8, 0}  // X, Y, Z, E distance between hotend nozzle and deployed bed leveling probe.
 #define Z_PROBE_DEPLOY_START_LOCATION {20, 96, 30, 0}   // X, Y, Z, E start location for z-probe deployment sequence
 #define Z_PROBE_DEPLOY_END_LOCATION {5, 96, 30, 0} 	  // X, Y, Z, E end location for z-probe deployment sequence
 #define Z_PROBE_RETRACT_START_LOCATION {49, 84, 20, 0}  // X, Y, Z, E start location for z-probe retract sequence
@@ -415,7 +418,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 
 //#define ULTIMAKERCONTROLLER //as available from the ultimaker online store.
 //#define ULTIPANEL  //the ultipanel as on thingiverse
-#define ENABLE_OLPLCD
+#define ENABLE_ULTILCD2
 
 // The MaKr3d Makr-Panel with graphic controller and SD support
 // http://reprap.org/wiki/MaKr3d_MaKrPanel
@@ -446,12 +449,12 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 //#define RA_CONTROL_PANEL
 
 // OLP Display
-#ifdef ENABLE_OLPLCD
+//#ifdef ENABLE_OLPLCD
   //#define DOGLCD
-  #define MANUAL_FEEDRATE {50*60, 50*60, 4*60, 60}
+  //#define MANUAL_FEEDRATE {50*60, 50*60, 4*60, 60}
   //#define SDSUPPORT
-  #define SDCARDDETECT -1
-  #define BEEPER -1
+  //#define SDCARDDETECT -1
+  //#define BEEPER -1
 
 
   //display pins
@@ -466,7 +469,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 
   //#define ULTIPANEL
 
-#endif
+//#endif
 
 
 //automatic expansion

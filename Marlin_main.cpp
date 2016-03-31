@@ -30,6 +30,7 @@
 #include "Marlin.h"
 
 #include "ultralcd.h"
+#include "UltiLCD2.h"
 #include "planner.h"
 #include "stepper.h"
 #include "temperature.h"
@@ -39,6 +40,10 @@
 #include "ConfigurationStore.h"
 #include "language.h"
 #include "pins_arduino.h"
+#include "Overlord_additions.h"
+
+#include "UltiLCD2_low_lib.h"
+#include "UltiLCD2_hi_lib.h"
 
 #if NUM_SERVOS > 0
 #include "Servo.h"
@@ -251,6 +256,18 @@ float delta_tmp[3] = {0.0, 0.0, 0.0};
 const char axis_codes[NUM_AXIS] = {'X', 'Y', 'Z', 'E'};
 const float SIN_60 = 0.8660254037844386;
 const float COS_60 = 0.5;
+const float COS_30 = 0.8660254037844386;
+const float SIN_30 = 0.5;
+const float COS_90 = 0.0;
+const float SIN_90 = 1.0;
+const float COS_150 = -0.8660254037844386;
+const float SIN_150 = 0.5;
+const float COS_210 = -0.8660254037844386;
+const float SIN_210 = -0.5;
+const float COS_270 = 0.0;
+const float SIN_270 = -1.0;
+const float COS_330 = 0.8660254037844386;
+const float SIN_330 = -0.5;
 static float destination[NUM_AXIS] = {  0.0, 0.0, 0.0, 0.0};
 static float offset[3] = {0.0, 0.0, 0.0};
 static float bed_level[7][7] = {
@@ -265,7 +282,7 @@ static float bed_level[7][7] = {
 static bool home_all_axis = true;
 static float feedrate = 1500.0, next_feedrate, saved_feedrate, z_offset;
 static float bed_level_x, bed_level_y, bed_level_z;
-static float bed_level_c = 25; //used for inital bed probe safe distance (to avoid crashing into bed)
+static float bed_level_c = 45; //used for inital bed probe safe distance (to avoid crashing into bed)
 static float bed_level_ox, bed_level_oy, bed_level_oz;
 static long gcode_N, gcode_LastN, Stopped_gcode_LastN = 0;
 static int loopcount;
@@ -312,6 +329,10 @@ bool target_direction;
 
 void get_arc_coordinates();
 bool setTargetedHotend(int code);
+
+float probe_bed_iterative(float x, float y);
+boolean is_concave(float center_value, float probe_points[6]);
+boolean is_convex(float center_value, float probe_points[6]);
 
 void serial_echopair_P(const char *s_P, float v)
     { serialprintPGM(s_P); SERIAL_ECHO(v); }
@@ -437,8 +458,8 @@ void servo_init()
 
 void setup()
 {
-  setup_killpin();
-  setup_powerhold();
+  //ASCHUBERT: setup_killpin();
+  //SCHUSBI: setup_powerhold();
   MYSERIAL.begin(BAUDRATE);
   SERIAL_PROTOCOLLNPGM("start");
   SERIAL_ECHO_START;
@@ -451,6 +472,8 @@ void setup()
   if(mcu & 8) SERIAL_ECHOLNPGM(MSG_WATCHDOG_RESET);
   if(mcu & 32) SERIAL_ECHOLNPGM(MSG_SOFTWARE_RESET);
   MCUSR=0;
+  OCR0B = 128;
+  TIMSK0 |= (1<<OCIE0B);
 
   SERIAL_ECHOPGM(MSG_MARLIN);
   SERIAL_ECHOLNPGM(VERSION_STRING);
@@ -486,7 +509,6 @@ void setup()
   servo_init();
 
   lcd_init();
-  _delay_ms(1000);	// wait 1sec to display the splash screen
 
   #if defined(CONTROLLERFAN_PIN) && CONTROLLERFAN_PIN > -1
     SET_OUTPUT(CONTROLLERFAN_PIN); //Set pin used for driver cooling fan
@@ -907,7 +929,18 @@ void set_delta_constants()
 }
 
 void deploy_z_probe() {
-  
+  SERIAL_PROTOCOLLN("deploy z-probe");
+  #if defined(Z_MIN_PIN) && Z_MIN_PIN > -1
+    SERIAL_PROTOCOLLN("waiting...");
+    while (true) {
+      if (READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING) break;
+      delay(100);
+    }
+  #endif
+
+  //lcd_lib_draw_string_centerP(9, PSTR("Please have z-probe"));
+  //lcd_lib_draw_string_centerP(18, PSTR("installed and press"));
+  //lcd_lib_draw_string_centerP(27, PSTR("probe once to start..."));
 /*  feedrate = homing_feedrate[X_AXIS];
   destination[X_AXIS] = z_probe_deploy_start_location[X_AXIS];
   destination[Y_AXIS] = z_probe_deploy_start_location[Y_AXIS];
@@ -929,6 +962,8 @@ void deploy_z_probe() {
 }
 
 void retract_z_probe() {
+  home_delta_axis();
+
 /*  feedrate = homing_feedrate[X_AXIS];
   destination[Z_AXIS] = 50;
   prepare_move_raw();
@@ -1598,6 +1633,7 @@ void process_commands()
         }
        if (code_seen('X') and code_seen('Y'))
           {
+          home_delta_axis();
           //Probe specified X,Y point
           float x = code_seen('X') ? code_value():0.00;
           float y = code_seen('Y') ? code_value():0.00;
@@ -1805,7 +1841,7 @@ void process_commands()
 
                      tower_adj[0] -= adj_AlphaA;
                      tower_adj[1] -= adj_AlphaB;
-	             tower_adj[2] -= adj_AlphaC;
+	                   tower_adj[2] -= adj_AlphaC;
                      tower_adj[3] += adj_RadiusA;
                      tower_adj[4] += adj_RadiusB;
                      tower_adj[5] += adj_RadiusC;
@@ -2003,7 +2039,7 @@ void process_commands()
                 
                   //probe bed and display report
                   bed_probe_all();
-		  calibration_report();
+		              calibration_report();
 
                   //Check to see if autocal is complete to within limits..
                   if (adj_dr_allowed == true)
@@ -2030,6 +2066,8 @@ void process_commands()
 
             SERIAL_ECHOLN("Auto Calibration Complete");
             SERIAL_ECHOLN("Issue M500 Command to save calibration settings to EPROM (if enabled)");
+            home_delta_axis();
+
          /*   
             if ((abs(delta_diagonal_rod - saved_delta_diagonal_rod) > 1) and (adj_dr_allowed == true))
               {
@@ -2047,7 +2085,180 @@ void process_commands()
         //Restore saved variables
         feedrate = saved_feedrate;
         feedmultiply = saved_feedmultiply;
-        break; 
+        break;
+   
+    // ---- Automatic Bed tilt adjustment ----
+    // ---- Added by Ken St. Cyr ----    
+    case 31:
+    {
+        SERIAL_ECHOLN("Adjusting for bed tilt");
+        SERIAL_ECHOLN("");
+      
+        
+        // Home the printer
+        home_delta_axis();
+        deploy_z_probe();
+       
+        // Variables for storing each probe result
+        float tilt_probe_array[3];
+        
+        // Probe the Center
+        float center_probe_result = probe_bed_iterative(0, 0);
+        SERIAL_ECHOPAIR("Center: ", center_probe_result); 
+        SERIAL_ECHOLN("");
+        
+        // Probe near X Tower @ 210 Degrees
+        tilt_probe_array[0] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_210, (BED_DIAMETER / 2 - 5) * SIN_210);
+        SERIAL_ECHOPAIR("X Tower: ", tilt_probe_array[0]); 
+        SERIAL_ECHOLN("");
+        
+        // Probe near Y Tower @ 330 Degrees     
+        tilt_probe_array[1] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_330, (BED_DIAMETER / 2 - 5) * SIN_330);     
+        SERIAL_ECHOPAIR("Y Tower: ", tilt_probe_array[1]); 
+        SERIAL_ECHOLN("");
+        
+        // Probe near Z Tower @ 90 Degrees
+        tilt_probe_array[2] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_90, (BED_DIAMETER / 2 - 5) * SIN_90);       
+        SERIAL_ECHOPAIR("Z Tower: ", tilt_probe_array[2]); 
+        SERIAL_ECHOLN("");
+      
+        // Find the tower that the nozzle is the highest from
+        float target_height = 0.0;
+        for (int i = 0; i < 3; i++)
+        {
+            if (tilt_probe_array[i] > target_height)
+            {
+                target_height = tilt_probe_array[i];
+            }
+        }
+        
+        // Adjust Endstops
+        endstop_adj[0] -= target_height - tilt_probe_array[0];
+        endstop_adj[1] -= target_height - tilt_probe_array[1];
+        endstop_adj[2] -= target_height - tilt_probe_array[2];
+      
+        // Figure out which endstop is the highest up
+        float highest_endstop = endstop_adj[0];
+        if (endstop_adj[1] > highest_endstop) highest_endstop = endstop_adj[1];
+        if (endstop_adj[2] > highest_endstop) highest_endstop = endstop_adj[2];
+        
+        // Adjust all of the endstops so the highest one is at position zero
+        for (int i = 0; i < 3; i++)
+        {
+            endstop_adj[i] -= highest_endstop;
+        }    
+       
+        // Adjust the bed height accordingly
+        max_pos[Z_AXIS] -= center_probe_result + z_probe_offset[Z_AXIS];//highest_endstop;
+        set_delta_constants();          
+      
+        // Home the printer
+        home_delta_axis();
+      
+        SERIAL_ECHOLN("Tilt adjustment complete. New endstop values:");
+        SERIAL_ECHOPAIR("X Tower: ", endstop_adj[0]);
+        SERIAL_ECHOLN("");
+        SERIAL_ECHOPAIR("Y Tower: ", endstop_adj[1]); 
+        SERIAL_ECHOLN("");
+        SERIAL_ECHOPAIR("Z Tower: ", endstop_adj[2]); 
+        SERIAL_ECHOLN("");
+    
+        break;
+    }
+    // ---- Automatic Delta Radius adjustment ----
+    // ---- Added by Ken St. Cyr ---- 
+    case 32:
+      SERIAL_ECHOLN("Checking Delta Radius");
+      SERIAL_ECHOLN("");
+
+      home_delta_axis();
+      deploy_z_probe();
+      
+      float probe_array[3];
+      float center_value;
+      
+      // Probe each position and store the results in an array
+      center_value = probe_bed_iterative(0, 0);
+      probe_array[0] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_90, (BED_DIAMETER / 2 - 5) * SIN_90);
+      probe_array[1] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_210, (BED_DIAMETER / 2 - 5) * SIN_210);
+      probe_array[2] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_330, (BED_DIAMETER / 2 - 5) * SIN_330);
+
+      // Print out a report of the positions
+      SERIAL_ECHOPAIR("Center: ", center_value);
+      SERIAL_ECHOLN("");
+      for (int i=0; i < 3; i++)
+      {
+          SERIAL_ECHO("Position ");
+          SERIAL_ECHO(i);
+          SERIAL_ECHO(": ");
+          SERIAL_PROTOCOL_F(probe_array[i], 2);
+          SERIAL_ECHOLN(""); 
+      }
+      
+      while (is_concave(center_value, probe_array) || is_convex(center_value, probe_array))
+      {
+          // Check Delta Geometry
+          if (is_concave(center_value, probe_array))
+          {
+              // Printer is concave - decrease delta radius
+              delta_radius -= .1; 
+          }
+          else if (is_convex(center_value, probe_array))
+          {
+              /// Printer is convex - increase delta radius
+              delta_radius += .1;
+          }
+          
+          set_delta_constants();
+          
+          SERIAL_ECHOPAIR("New Delta Radius: ", delta_radius);
+          SERIAL_ECHOLN("");
+          
+          home_delta_axis();
+          
+          center_value = probe_bed_iterative(0, 0);
+          probe_array[0] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_90, (BED_DIAMETER / 2 - 5) * SIN_90);
+          probe_array[1] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_210, (BED_DIAMETER / 2 - 5) * SIN_210);
+          probe_array[2] = probe_bed_iterative((BED_DIAMETER / 2 - 5) * COS_330, (BED_DIAMETER / 2 - 5) * SIN_330);
+          
+          // Print out a report of the positions
+          SERIAL_ECHOPAIR("Center: ", center_value);
+          SERIAL_ECHOLN("");
+          for (int i=0; i < 3; i++)
+          {
+              SERIAL_ECHO("Position ");
+              SERIAL_ECHO(i);
+              SERIAL_ECHO(": ");
+              SERIAL_PROTOCOL_F(probe_array[i], 2);
+              SERIAL_ECHOLN(""); 
+          }
+      }
+      
+      // Home the printer
+      home_delta_axis();
+      break;
+      
+    // ---- Automatic Bed Height adjustment ----
+    // ---- Added by Ken St. Cyr ---- 
+    case 33:
+      float bed_adjustment_delta;
+      
+      // Probe the bed and add the probe offset to determine how far off the nozzle is from
+      // the bed.  A positive value indicates that there is a gap between the nozzle and bed
+      // and a negative value indicates that the nozzle is hitting the bed too early.
+      bed_adjustment_delta = probe_bed_iterative(0, 0) + z_probe_offset[Z_AXIS];
+      
+      // Adjust the bed height by subtracting the calculated gap/overlap from the existing
+      // bed height. If the gap/overlap is positive, the bed height needs to be lowered to make
+      // the bed shorter.  If it's negative, it indicates an overlap and the bed needs to be
+      // made bigger.
+      max_pos[Z_AXIS] -= bed_adjustment_delta;
+      set_delta_constants();
+      
+      // Re-home the printer in order for the adjustment to take effect.
+      home_delta_axis();
+      break;
+      
     case 90: // G90
       relative_mode = false;
       break;
@@ -3793,7 +4004,8 @@ void kill()
   disable_e2();
 
 #if defined(PS_ON_PIN) && PS_ON_PIN > -1
-  pinMode(PS_ON_PIN,INPUT);
+  SET_OUTPUT(PS_ON_PIN);
+  WRITE(PS_ON_PIN, PS_ON_ASLEEP);
 #endif
   SERIAL_ERROR_START;
   SERIAL_ERRORLNPGM(MSG_ERR_KILLED);
@@ -3819,11 +4031,6 @@ bool IsStopped() { return Stopped; };
 #ifdef FAST_PWM_FAN
 void setPwmFrequency(uint8_t pin, int val)
 {
-  SERIAL_ECHOLN("setPwmFrequency");
-  SERIAL_ECHOPAIR("pin:" ,pin);
-  SERIAL_ECHOPAIR("val" ,val);
-  SERIAL_ECHOLN("");
-  sfhskdjfh();
   val &= 0x07;
   switch(digitalPinToTimer(pin))
   {
@@ -3918,3 +4125,87 @@ bool setTargetedHotend(int code){
   return false;
 }
 
+
+// ---- Probes the bed at a single point, using an iterative check. ----
+// ---- Added by Ken St. Cyr ----
+float probe_bed_iterative(float x, float y)
+{
+    // Set the nozzel position to 50mm above the bed before probing begins
+    destination[X_AXIS] = x - z_probe_offset[X_AXIS];
+    destination[Y_AXIS] = y - z_probe_offset[Y_AXIS];
+    destination[Z_AXIS] = 50;
+    
+    // Set the feedrate to the homing feedrate - speeds things up
+    feedrate = homing_feedrate[Z_AXIS];
+    
+    // Move the nozzle to z = 50
+    prepare_move();
+    st_synchronize();
+   
+    // Slow down the feedrate a bit
+    feedrate = 5000;
+    
+    // Iteratively lower the probe in 0.1 mm increments until we see the Z Probe trigger
+    while(!(READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING))
+    {
+        destination[Z_AXIS] -= 0.1;
+        prepare_move();
+        st_synchronize();
+    }
+   
+    // For storing average probe value from 10 iterations
+    float avg_probe_val;
+    avg_probe_val = 0.0;
+
+    for (int i = 0; i < 3; i++)
+    {
+        // Raise the probe 1mm above the bed
+        destination[Z_AXIS] += 5.0;
+        prepare_move();
+        st_synchronize();
+        
+        // Probe with defined autocalidation precision
+        while(!(READ(Z_MIN_PIN)^Z_MIN_ENDSTOP_INVERTING))
+        {
+            destination[Z_AXIS] -= AUTOCALIBRATION_PRECISION;
+            prepare_move();
+            st_synchronize();
+        }
+        
+        // Add running total to average
+        avg_probe_val += destination[Z_AXIS];
+    }
+    
+    // Returns the position of the nozzle when the probe deployed
+    return avg_probe_val / 3.0;
+}
+
+// Returns true if the delta geometry is making the hotend concave
+boolean is_concave(float center_value, float probe_points[3])
+{
+    for (int i = 1; i < 3; i++)
+    {
+        // Is the center lower than any other probed point? If not, it's not concave
+        if (center_value <= probe_points[i])
+        {
+            return false;
+        }
+    }
+    // The center is higher than every probed point, therefore it is concave
+    return true;
+}
+
+// Returns true if the delta geometry is making the hotend convex
+boolean is_convex(float center_value, float probe_points[3])
+{
+    for (int i = 1; i < 3; i++)
+    {
+        // Is the center higher than any other probed point? If not, it's not convex
+        if (center_value >= probe_points[i])
+        {
+            return false;
+        }
+    }
+    // The center is lower than every probed point, therefore it is convex
+    return true;
+}
