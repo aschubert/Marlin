@@ -173,20 +173,10 @@ void Config_PrintSettings()
       SERIAL_ECHOPAIR(" R" ,delta_radius);
       SERIAL_ECHOPAIR(" D" ,delta_diagonal_rod);
       SERIAL_ECHOPAIR(" H" ,max_pos[2]);
-      SERIAL_ECHOPAIR(" P" ,z_probe_offset[3]);
+      SERIAL_ECHOPAIR(" P (Z-Probe Offset): X", z_probe_offset[0]);
+      SERIAL_ECHOPAIR(" Y", z_probe_offset[1]);
+      SERIAL_ECHOPAIR(" Z", z_probe_offset[2]);
       SERIAL_ECHOLN("");
-/*
-      SERIAL_ECHOLN("Tower Positions");
-      SERIAL_ECHOPAIR("Tower1 X:",delta_tower1_x);
-      SERIAL_ECHOPAIR(" Y:",delta_tower1_y);
-      SERIAL_ECHOLN("");
-      SERIAL_ECHOPAIR("Tower2 X:",delta_tower2_x);
-      SERIAL_ECHOPAIR(" Y:",delta_tower2_y);
-      SERIAL_ECHOLN("");
-      SERIAL_ECHOPAIR("Tower3 X:",delta_tower3_x);
-      SERIAL_ECHOPAIR(" Y:",delta_tower3_y);
-      SERIAL_ECHOLN("");
-*/
     #endif
  #ifdef PIDTEMP
     SERIAL_ECHO_START;
@@ -230,7 +220,7 @@ void Config_RetrieveSettings()
         EEPROM_READ_VAR(i,add_homeing);
         #ifdef DELTA
           EEPROM_READ_VAR(i,delta_radius);
-	    EEPROM_READ_VAR(i,delta_diagonal_rod);
+          EEPROM_READ_VAR(i,delta_diagonal_rod);
           EEPROM_READ_VAR(i,max_pos);
           EEPROM_READ_VAR(i,endstop_adj);
           EEPROM_READ_VAR(i,tower_adj);

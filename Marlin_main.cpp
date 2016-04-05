@@ -2927,7 +2927,15 @@ void process_commands()
 	     set_delta_constants();
          }
 	   if (code_seen('P')) {
-             z_probe_offset[Z_AXIS]= code_value();
+        if (code_seen('X')) {
+          z_probe_offset[X_AXIS] = code_value();
+        } else if (code_seen('Y')) {
+          z_probe_offset[Y_AXIS] = code_value();
+        } else if (code_seen('Z')) {
+          z_probe_offset[Z_AXIS]= code_value();
+        } else {
+          z_probe_offset[Z_AXIS]= code_value();          
+        }
 	   }
 	   if (code_seen('L')) {
 	     SERIAL_ECHOLN("Current Delta geometry values:");
